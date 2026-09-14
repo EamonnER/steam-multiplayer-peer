@@ -1,6 +1,6 @@
 #include <godot_cpp/core/class_db.hpp>
 
-#include "steam_multiplayer_peer.h"
+#include "expresso_steam_multiplayer_peer.h"
 
 #include <godot_cpp/variant/utility_functions.hpp>
 

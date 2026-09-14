@@ -6,7 +6,7 @@
 #include <godot_cpp/classes/time.hpp>
 #include <memory>
 
-#include "steam_packet_peer.h"
+#include "expresso_steam_packet_peer.h"
 
 #define MAX_STEAM_PACKET_SIZE k_cbMaxSteamNetworkingSocketsMessageSizeSend
 
