@@ -6,17 +6,17 @@
 
 #define STEAM_BUFFER_SIZE 255
 
-SteamMultiplayerPeer::SteamMultiplayerPeer() :
-		callback_network_connection_status_changed(this, &SteamMultiplayerPeer::network_connection_status_changed) {
+ExpressoSteamMultiplayerPeer::ExpressoSteamMultiplayerPeer() :
+		callback_network_connection_status_changed(this, &ExpressoSteamMultiplayerPeer::network_connection_status_changed) {
 }
 
-SteamMultiplayerPeer::~SteamMultiplayerPeer() {
+ExpressoSteamMultiplayerPeer::~ExpressoSteamMultiplayerPeer() {
 	if (_is_active()) {
 		_close();
 	}
 }
 
-Error SteamMultiplayerPeer::_get_packet(const uint8_t **r_buffer, int32_t *r_buffer_size) {
+Error ExpressoSteamMultiplayerPeer::_get_packet(const uint8_t **r_buffer, int32_t *r_buffer_size) {
 	ERR_FAIL_COND_V_MSG(incoming_packets.size() == 0, ERR_UNAVAILABLE, "No incoming packets available.");
 
 	//delete next_received_packet;
@@ -29,7 +29,7 @@ Error SteamMultiplayerPeer::_get_packet(const uint8_t **r_buffer, int32_t *r_buf
 	return OK;
 }
 
-Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffer_size) {
+Error ExpressoSteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffer_size) {
 	ERR_FAIL_COND_V_MSG(!_is_active(), ERR_UNCONFIGURED, "The multiplayer instance isn't currently active.");
 	ERR_FAIL_COND_V_MSG(connection_status != CONNECTION_CONNECTED, ERR_UNCONFIGURED, "The multiplayer instance isn't currently connected to any server or client.");
 	ERR_FAIL_COND_V_MSG(target_peer != 0 && !peerId_to_steamId.has(ABS(target_peer)), ERR_INVALID_PARAMETER, vformat("Invalid target peer: %d", target_peer));
@@ -39,7 +39,7 @@ Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffe
 	if (target_peer == 0) {
 		Error returnValue = OK;
 		for (HashMap<uint64_t, Ref<SteamConnection>>::Iterator E = connections_by_steamId64.begin(); E; ++E) {
-			Ref<SteamPacketPeer> packet = Ref<SteamPacketPeer>(memnew(SteamPacketPeer(p_buffer, p_buffer_size, transferMode)));
+			Ref<ExpressoSteamPacketPeer> packet = Ref<ExpressoSteamPacketPeer>(memnew(ExpressoSteamPacketPeer(p_buffer, p_buffer_size, transferMode)));
 			Error errorCode = E->value->send(packet);
 			if (errorCode != OK) {
 				returnValue = errorCode;
@@ -47,25 +47,25 @@ Error SteamMultiplayerPeer::_put_packet(const uint8_t *p_buffer, int32_t p_buffe
 		}
 		return returnValue;
 	} else {
-		Ref<SteamPacketPeer> packet = Ref<SteamPacketPeer>(memnew(SteamPacketPeer(p_buffer, p_buffer_size, transferMode)));
+		Ref<ExpressoSteamPacketPeer> packet = Ref<ExpressoSteamPacketPeer>(memnew(ExpressoSteamPacketPeer(p_buffer, p_buffer_size, transferMode)));
 		return get_connection_by_peer(target_peer)->send(packet);
 	}
 }
 
-int32_t SteamMultiplayerPeer::_get_available_packet_count() const {
+int32_t ExpressoSteamMultiplayerPeer::_get_available_packet_count() const {
 	int32_t size = incoming_packets.size();
 	return size;
 }
 
-int32_t SteamMultiplayerPeer::_get_max_packet_size() const {
+int32_t ExpressoSteamMultiplayerPeer::_get_max_packet_size() const {
 	return k_cbMaxSteamNetworkingSocketsMessageSizeSend;
 }
 
-int32_t SteamMultiplayerPeer::_get_packet_channel() const {
+int32_t ExpressoSteamMultiplayerPeer::_get_packet_channel() const {
 	return 0;
 }
 
-MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_packet_mode() const {
+MultiplayerPeer::TransferMode ExpressoSteamMultiplayerPeer::_get_packet_mode() const {
 	ERR_FAIL_COND_V_MSG(!_is_active(), TRANSFER_MODE_RELIABLE, "The multiplayer instance isn't currently active.");
 	ERR_FAIL_COND_V_MSG(incoming_packets.size() == 0, TRANSFER_MODE_RELIABLE, "No pending packets, cannot get transfer mode.");
 
@@ -76,26 +76,26 @@ MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_packet_mode() const {
 	}
 }
 
-void SteamMultiplayerPeer::_set_transfer_channel(int32_t p_channel) {
+void ExpressoSteamMultiplayerPeer::_set_transfer_channel(int32_t p_channel) {
 }
 
-int32_t SteamMultiplayerPeer::_get_transfer_channel() const {
+int32_t ExpressoSteamMultiplayerPeer::_get_transfer_channel() const {
 	return 0;
 }
 
-void SteamMultiplayerPeer::_set_transfer_mode(MultiplayerPeer::TransferMode p_mode) {
+void ExpressoSteamMultiplayerPeer::_set_transfer_mode(MultiplayerPeer::TransferMode p_mode) {
 	transfer_mode = p_mode;
 }
 
-MultiplayerPeer::TransferMode SteamMultiplayerPeer::_get_transfer_mode() const {
+MultiplayerPeer::TransferMode ExpressoSteamMultiplayerPeer::_get_transfer_mode() const {
 	return transfer_mode;
 }
 
-void SteamMultiplayerPeer::_set_target_peer(int32_t p_peer) {
+void ExpressoSteamMultiplayerPeer::_set_target_peer(int32_t p_peer) {
 	target_peer = p_peer;
 }
 
-int32_t SteamMultiplayerPeer::_get_packet_peer() const {
+int32_t ExpressoSteamMultiplayerPeer::_get_packet_peer() const {
 	ERR_FAIL_COND_V_MSG(!_is_active(), 1, "The multiplayer instance isn't currently active.");
 	ERR_FAIL_COND_V_MSG(incoming_packets.size() == 0, 1, "No packets to receive.");
 
@@ -103,12 +103,12 @@ int32_t SteamMultiplayerPeer::_get_packet_peer() const {
 	return peer_id;
 }
 
-bool SteamMultiplayerPeer::_is_server() const {
+bool ExpressoSteamMultiplayerPeer::_is_server() const {
 	return unique_id == 1;
 }
 
 #define MAX_MESSAGE_COUNT 255
-void SteamMultiplayerPeer::_poll() {
+void ExpressoSteamMultiplayerPeer::_poll() {
 	ERR_FAIL_COND_MSG(!_is_active(), "The multiplayer instance isn't currently active.");
 
 	SteamNetworkingMessage_t *messages[MAX_MESSAGE_COUNT];
@@ -150,14 +150,14 @@ void SteamMultiplayerPeer::_poll() {
     }
 }
 
-void SteamMultiplayerPeer::_close() {
+void ExpressoSteamMultiplayerPeer::_close() {
 	if (connection_status != CONNECTION_CONNECTED) {
 		return;
 	}
 	force_close();
 }
 
-void SteamMultiplayerPeer::force_close() {
+void ExpressoSteamMultiplayerPeer::force_close() {
 	if (!_is_active()) {
 		return;
 	}
@@ -179,7 +179,7 @@ void SteamMultiplayerPeer::force_close() {
 	connection_status = CONNECTION_DISCONNECTED;
 }
 
-void SteamMultiplayerPeer::_disconnect_peer(int32_t p_peer, bool p_force) {
+void ExpressoSteamMultiplayerPeer::_disconnect_peer(int32_t p_peer, bool p_force) {
 	ERR_FAIL_COND_MSG(!_is_active(), "The multiplayer instance isn't currently active.");
 	ERR_FAIL_COND_MSG(!peerId_to_steamId.has(p_peer), "'PeerConnection' not registered for steam_id. Try p_force true if need clear all multiplayer data.");
 	Ref<SteamConnection> connection = get_connection_by_peer(p_peer);
@@ -217,20 +217,20 @@ void SteamMultiplayerPeer::_disconnect_peer(int32_t p_peer, bool p_force) {
 	}
 }
 
-int32_t SteamMultiplayerPeer::_get_unique_id() const {
+int32_t ExpressoSteamMultiplayerPeer::_get_unique_id() const {
 	ERR_FAIL_COND_V_MSG(!_is_active(), 0, "The multiplayer instance isn't currently active.");
 	return unique_id;
 }
 
-bool SteamMultiplayerPeer::_is_server_relay_supported() const {
+bool ExpressoSteamMultiplayerPeer::_is_server_relay_supported() const {
 	return active_mode == MODE_SERVER || active_mode == MODE_CLIENT;
 }
 
-MultiplayerPeer::ConnectionStatus SteamMultiplayerPeer::_get_connection_status() const {
+MultiplayerPeer::ConnectionStatus ExpressoSteamMultiplayerPeer::_get_connection_status() const {
 	return connection_status;
 }
 
-bool SteamMultiplayerPeer::close_listen_socket() {
+bool ExpressoSteamMultiplayerPeer::close_listen_socket() {
 	if (SteamNetworkingSockets() == NULL) {
 		WARN_PRINT(String("SteamNetworkingSockets is null!"));
 		return false;
@@ -242,7 +242,7 @@ bool SteamMultiplayerPeer::close_listen_socket() {
 	return true;
 }
 
-Error SteamMultiplayerPeer::create_host(int n_local_virtual_port) {
+Error ExpressoSteamMultiplayerPeer::create_host(int n_local_virtual_port) {
 	ERR_FAIL_COND_V_MSG(_is_active(), ERR_ALREADY_IN_USE, "The multiplayer instance is already active.");
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_UNAVAILABLE;
@@ -264,7 +264,7 @@ Error SteamMultiplayerPeer::create_host(int n_local_virtual_port) {
 	return Error::OK;
 }
 
-Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote_virtual_port) {
+Error ExpressoSteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote_virtual_port) {
 	ERR_FAIL_COND_V_MSG(_is_active(), ERR_ALREADY_IN_USE, "The multiplayer instance is already active.");
 	if (SteamNetworkingSockets() == NULL) {
 		return Error::ERR_UNAVAILABLE;
@@ -290,28 +290,28 @@ Error SteamMultiplayerPeer::create_client(uint64_t identity_remote, int n_remote
 	return Error::OK;
 }
 
-bool SteamMultiplayerPeer::get_identity(SteamNetworkingIdentity *p_identity) {
+bool ExpressoSteamMultiplayerPeer::get_identity(SteamNetworkingIdentity *p_identity) {
 	return SteamNetworkingSockets()->GetIdentity(p_identity);
 }
 
-void SteamMultiplayerPeer::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("create_host", "n_local_virtual_port"), &SteamMultiplayerPeer::create_host, DEFVAL(nullptr));
-	ClassDB::bind_method(D_METHOD("create_client", "identity_remote", "n_local_virtual_port"), &SteamMultiplayerPeer::create_client, DEFVAL(nullptr));
-	ClassDB::bind_method(D_METHOD("set_listen_socket", "listen_socket"), &SteamMultiplayerPeer::set_listen_socket);
-	ClassDB::bind_method(D_METHOD("get_listen_socket"), &SteamMultiplayerPeer::get_listen_socket);
-	ClassDB::bind_method(D_METHOD("get_steam64_from_peer_id", "peer_id"), &SteamMultiplayerPeer::get_steam64_from_peer_id);
-	ClassDB::bind_method(D_METHOD("get_peer_id_from_steam64", "steamid"), &SteamMultiplayerPeer::get_peer_id_from_steam64);
-	ClassDB::bind_method(D_METHOD("set_no_nagle", "no_nagle"), &SteamMultiplayerPeer::set_no_nagle);
-	ClassDB::bind_method(D_METHOD("get_no_nagle"), &SteamMultiplayerPeer::get_no_nagle);
-	ClassDB::bind_method(D_METHOD("set_no_delay", "no_delay"), &SteamMultiplayerPeer::set_no_delay);
-	ClassDB::bind_method(D_METHOD("get_no_delay"), &SteamMultiplayerPeer::get_no_delay);
-	// ClassDB::bind_method(D_METHOD("set_as_relay", "as_relay"), &SteamMultiplayerPeer::set_as_relay);
-	// ClassDB::bind_method(D_METHOD("get_as_relay"), &SteamMultiplayerPeer::get_as_relay);
-	ClassDB::bind_method(D_METHOD("set_options", "options"), &SteamMultiplayerPeer::set_options);
-	ClassDB::bind_method(D_METHOD("get_options"), &SteamMultiplayerPeer::get_options);
-	ClassDB::bind_method(D_METHOD("set_config", "steam_networking_config", "value"), &SteamMultiplayerPeer::set_config);
-	ClassDB::bind_method(D_METHOD("clear_config", "steam_networking_config"), &SteamMultiplayerPeer::clear_config);
-	ClassDB::bind_method(D_METHOD("clear_all_configs"), &SteamMultiplayerPeer::clear_all_configs);
+void ExpressoSteamMultiplayerPeer::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("create_host", "n_local_virtual_port"), &ExpressoSteamMultiplayerPeer::create_host, DEFVAL(nullptr));
+	ClassDB::bind_method(D_METHOD("create_client", "identity_remote", "n_local_virtual_port"), &ExpressoSteamMultiplayerPeer::create_client, DEFVAL(nullptr));
+	ClassDB::bind_method(D_METHOD("set_listen_socket", "listen_socket"), &ExpressoSteamMultiplayerPeer::set_listen_socket);
+	ClassDB::bind_method(D_METHOD("get_listen_socket"), &ExpressoSteamMultiplayerPeer::get_listen_socket);
+	ClassDB::bind_method(D_METHOD("get_steam64_from_peer_id", "peer_id"), &ExpressoSteamMultiplayerPeer::get_steam64_from_peer_id);
+	ClassDB::bind_method(D_METHOD("get_peer_id_from_steam64", "steamid"), &ExpressoSteamMultiplayerPeer::get_peer_id_from_steam64);
+	ClassDB::bind_method(D_METHOD("set_no_nagle", "no_nagle"), &ExpressoSteamMultiplayerPeer::set_no_nagle);
+	ClassDB::bind_method(D_METHOD("get_no_nagle"), &ExpressoSteamMultiplayerPeer::get_no_nagle);
+	ClassDB::bind_method(D_METHOD("set_no_delay", "no_delay"), &ExpressoSteamMultiplayerPeer::set_no_delay);
+	ClassDB::bind_method(D_METHOD("get_no_delay"), &ExpressoSteamMultiplayerPeer::get_no_delay);
+	// ClassDB::bind_method(D_METHOD("set_as_relay", "as_relay"), &ExpressoSteamMultiplayerPeer::set_as_relay);
+	// ClassDB::bind_method(D_METHOD("get_as_relay"), &ExpressoSteamMultiplayerPeer::get_as_relay);
+	ClassDB::bind_method(D_METHOD("set_options", "options"), &ExpressoSteamMultiplayerPeer::set_options);
+	ClassDB::bind_method(D_METHOD("get_options"), &ExpressoSteamMultiplayerPeer::get_options);
+	ClassDB::bind_method(D_METHOD("set_config", "steam_networking_config", "value"), &ExpressoSteamMultiplayerPeer::set_config);
+	ClassDB::bind_method(D_METHOD("clear_config", "steam_networking_config"), &ExpressoSteamMultiplayerPeer::clear_config);
+	ClassDB::bind_method(D_METHOD("clear_all_configs"), &ExpressoSteamMultiplayerPeer::clear_all_configs);
 
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "listen_socket"), "set_listen_socket", "get_listen_socket");
@@ -396,7 +396,7 @@ void SteamMultiplayerPeer::_bind_methods() {
 	BIND_ENUM_CONSTANT(NETWORKING_CONFIG_VALUE_FORCE32BIT);
 }
 
-const int SteamMultiplayerPeer::_get_steam_transfer_flag() {
+const int ExpressoSteamMultiplayerPeer::_get_steam_transfer_flag() {
 	MultiplayerPeer::TransferMode transfer_mode = get_transfer_mode();
 
 	int32_t flags = (k_nSteamNetworkingSend_NoNagle * no_nagle) | (k_nSteamNetworkingSend_NoDelay * no_delay);
@@ -423,7 +423,7 @@ const int SteamMultiplayerPeer::_get_steam_transfer_flag() {
 //! changes state. The m_info field will contain a complete description of the
 //! connection at the time the change occurred and the callback was posted. In
 //! particular, m_info.m_eState will have the new connection state.
-void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionStatusChangedCallback_t *call_data) {
+void ExpressoSteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionStatusChangedCallback_t *call_data) {
 	if (!_is_active()) {
 		return;
 	}
@@ -511,14 +511,14 @@ void SteamMultiplayerPeer::network_connection_status_changed(SteamNetConnectionS
 }
 
 // GODOT MULTIPLAYER PEER UTILS  ///////////////////
-Ref<SteamConnection> SteamMultiplayerPeer::get_connection_by_peer(int peer_id) {
+Ref<SteamConnection> ExpressoSteamMultiplayerPeer::get_connection_by_peer(int peer_id) {
 	if (peerId_to_steamId.has(peer_id))
 		return peerId_to_steamId[peer_id];
 
 	return nullptr;
 }
 
-void SteamMultiplayerPeer::add_connection(const uint64_t steam_id, HSteamNetConnection connection) {
+void ExpressoSteamMultiplayerPeer::add_connection(const uint64_t steam_id, HSteamNetConnection connection) {
 	ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID().ConvertToUint64(), "Cannot add self as a new peer.");
 
 	Ref<SteamConnection> connection_data = Ref<SteamConnection>(memnew(SteamConnection(steam_id)));
@@ -526,10 +526,10 @@ void SteamMultiplayerPeer::add_connection(const uint64_t steam_id, HSteamNetConn
 	connections_by_steamId64[steam_id] = connection_data;
 }
 
-void SteamMultiplayerPeer::_process_message(const SteamNetworkingMessage_t *msg) {
+void ExpressoSteamMultiplayerPeer::_process_message(const SteamNetworkingMessage_t *msg) {
 	ERR_FAIL_COND_MSG(msg->GetSize() > MAX_STEAM_PACKET_SIZE, "Packet too large to send!");
 
-	Ref<SteamPacketPeer> packet = Ref<SteamPacketPeer>(memnew(SteamPacketPeer));
+	Ref<ExpressoSteamPacketPeer> packet = Ref<ExpressoSteamPacketPeer>(memnew(ExpressoSteamPacketPeer));
 	packet->sender = msg->m_identityPeer.GetSteamID64();
 	packet->size = msg->GetSize();
 	packet->transfer_mode = msg->m_nFlags;
@@ -539,7 +539,7 @@ void SteamMultiplayerPeer::_process_message(const SteamNetworkingMessage_t *msg)
 	incoming_packets.push_back(packet);
 }
 
-void SteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t *msg) {
+void ExpressoSteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t *msg) {
 	ERR_FAIL_COND_MSG(sizeof(SteamConnection::SetupPeerPayload) != msg->GetSize(), "Payload is the wrong size for a ping.");
 
 	SteamConnection::SetupPeerPayload *receive = (SteamConnection::SetupPeerPayload *)msg->GetData();
@@ -562,7 +562,7 @@ void SteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t *msg) {
 	}
 }
 
-uint64_t SteamMultiplayerPeer::get_steam64_from_peer_id(const uint32_t peer_id) const {
+uint64_t ExpressoSteamMultiplayerPeer::get_steam64_from_peer_id(const uint32_t peer_id) const {
 	if (peer_id == this->unique_id) {
 		return SteamUser()->GetSteamID().ConvertToUint64();
 	} else if (peerId_to_steamId.has(peer_id)) {
@@ -571,7 +571,7 @@ uint64_t SteamMultiplayerPeer::get_steam64_from_peer_id(const uint32_t peer_id) 
 		return -1;
 }
 
-uint32_t SteamMultiplayerPeer::get_peer_id_from_steam64(const uint64_t steamid) const {
+uint32_t ExpressoSteamMultiplayerPeer::get_peer_id_from_steam64(const uint64_t steamid) const {
 	if (steamid == SteamUser()->GetSteamID().ConvertToUint64()) {
 		return this->unique_id;
 	} else if (connections_by_steamId64.has(steamid)) {
@@ -580,7 +580,7 @@ uint32_t SteamMultiplayerPeer::get_peer_id_from_steam64(const uint64_t steamid) 
 		return -1;
 }
 
-void SteamMultiplayerPeer::set_steam_id_peer(uint64_t steam_id, int peer_id) {
+void ExpressoSteamMultiplayerPeer::set_steam_id_peer(uint64_t steam_id, int peer_id) {
 	ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID().ConvertToUint64(), "Cannot add self as a new peer.");
 	ERR_FAIL_COND_MSG(connections_by_steamId64.has(steam_id) == false, "Steam ID missing");
 
@@ -595,15 +595,15 @@ void SteamMultiplayerPeer::set_steam_id_peer(uint64_t steam_id, int peer_id) {
 	}
 }
 
-void SteamMultiplayerPeer::set_listen_socket(const int listen_socket) {
+void ExpressoSteamMultiplayerPeer::set_listen_socket(const int listen_socket) {
 	this->listen_socket = listen_socket;
 }
 
-int SteamMultiplayerPeer::get_listen_socket() const {
+int ExpressoSteamMultiplayerPeer::get_listen_socket() const {
 	return listen_socket;
 }
 
-Dictionary SteamMultiplayerPeer::get_peer_map() {
+Dictionary ExpressoSteamMultiplayerPeer::get_peer_map() {
 	Dictionary output;
 	for (HashMap<uint64_t, Ref<SteamConnection>>::ConstIterator E = connections_by_steamId64.begin(); E; ++E) {
 		output[E->value->peer_id] = E->value->steam_id;
@@ -611,31 +611,31 @@ Dictionary SteamMultiplayerPeer::get_peer_map() {
 	return output;
 }
 
-void SteamMultiplayerPeer::set_no_nagle(const bool new_no_nagle) {
+void ExpressoSteamMultiplayerPeer::set_no_nagle(const bool new_no_nagle) {
 	no_nagle = new_no_nagle;
 }
 
-bool SteamMultiplayerPeer::get_no_nagle() const {
+bool ExpressoSteamMultiplayerPeer::get_no_nagle() const {
 	return no_nagle;
 }
 
-void SteamMultiplayerPeer::set_no_delay(const bool new_no_delay) {
+void ExpressoSteamMultiplayerPeer::set_no_delay(const bool new_no_delay) {
 	no_delay = new_no_delay;
 }
 
-bool SteamMultiplayerPeer::get_no_delay() const {
+bool ExpressoSteamMultiplayerPeer::get_no_delay() const {
 	return no_delay;
 }
 
-// void SteamMultiplayerPeer::set_as_relay(const bool new_as_relay) {
+// void ExpressoSteamMultiplayerPeer::set_as_relay(const bool new_as_relay) {
 // 	as_relay = new_as_relay;
 // }
 
-// bool SteamMultiplayerPeer::get_as_relay() const {
+// bool ExpressoSteamMultiplayerPeer::get_as_relay() const {
 // 	return as_relay;
 // }
 
-SteamNetworkingConfigValue_t *SteamMultiplayerPeer::get_convert_options() const {
+SteamNetworkingConfigValue_t *ExpressoSteamMultiplayerPeer::get_convert_options() const {
 	int options_size = options.size();
 	SteamNetworkingConfigValue_t *option_array = new SteamNetworkingConfigValue_t[options_size];
 
@@ -670,22 +670,22 @@ SteamNetworkingConfigValue_t *SteamMultiplayerPeer::get_convert_options() const 
 	return option_array;
 }
 
-Dictionary SteamMultiplayerPeer::get_options() const {
+Dictionary ExpressoSteamMultiplayerPeer::get_options() const {
 	return options;
 }
 
-void SteamMultiplayerPeer::set_options(const Dictionary new_options) {
+void ExpressoSteamMultiplayerPeer::set_options(const Dictionary new_options) {
 	options = new_options;
 }
 
-void SteamMultiplayerPeer::set_config(const SteamNetworkingConfig config, Variant value) {
+void ExpressoSteamMultiplayerPeer::set_config(const SteamNetworkingConfig config, Variant value) {
 	options[config] = value;
 }
 
-void SteamMultiplayerPeer::clear_config(const SteamNetworkingConfig config) {
+void ExpressoSteamMultiplayerPeer::clear_config(const SteamNetworkingConfig config) {
 	options.erase(config);
 }
 
-void SteamMultiplayerPeer::clear_all_configs() {
+void ExpressoSteamMultiplayerPeer::clear_all_configs() {
 	options.clear();
 }

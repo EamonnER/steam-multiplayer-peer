@@ -16,7 +16,7 @@ using namespace godot;
 #define MAX_PLAYERS_PER_SERVER 16
 
 class ExpressoSteamMultiplayerPeer : public MultiplayerPeerExtension {
-	GDCLASS(ExpressoSteamMultiplayerPeer, MultiplayerPeerExtension);
+	GDCLASS(ExpressoSteamMultiplayerPeer, MultiplayerPeerExtension)
 
 private:
 	// Used to record the time of the last handshake packet sent

@@ -10,7 +10,7 @@
 using namespace godot;
 
 class ExpressoSteamPacketPeer : public RefCounted {
-	GDCLASS(ExpressoSteamPacketPeer, RefCounted);
+	GDCLASS(ExpressoSteamPacketPeer, RefCounted)
 
 public:
 	enum SteamNetworkingSend {
