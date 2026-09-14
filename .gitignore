@@ -59,6 +59,5 @@ compile_commands.json
 .idea/
 
 .sconsign.dblite
-steam-multiplayer-peer/sdk/public
-steam-multiplayer-peer/sdk/redistributable_bin
-compile_commands.json
+steam-multiplayer-peer/sdk/*
+!steam-multiplayer-peer/sdk/Include Steam SDK here.txt
