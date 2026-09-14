@@ -3,24 +3,16 @@
 [![Documentation](https://img.shields.io/badge/documentation-no-red.svg)](todo-doc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](MIT)
 
-⚠️⚠️⚠️⚠️ Update Dec 2025 ⚠️⚠️⚠️⚠️
+⚠️⚠️⚠️⚠️ This is a fork ⚠️⚠️⚠️⚠️
 
-I have paused development on this plugin; please try using GodotSteam if possible.
-I encourage anyone to use a fork to continue development if necessary.
+This is a fork of the original Expresso Multiplayer Peer that had development paused.
+This fork is mainly for use in my personal projects; don't expect frequent updates or fixes.
 
 ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️
-
-Godot Asset Lib: https://godotengine.org/asset-library/asset/2258
 
 ## Branchs Map
 
 🪹[main](https://github.com/expressobits/steam-multiplayer-peer/tree/main): Contains C++ plugin source
-
-🪹[demo](https://github.com/expressobits/steam-multiplayer-peer/tree/demo): Same example as [godot bomberman](https://github.com/godotengine/godot-demo-projects/tree/master/networking/multiplayer_bomber), but instead of EnetPeer it uses SteamMultiplayerPeer
-
-🪹[addon](https://github.com/expressobits/steam-multiplayer-peer/tree/addon): Compiled version of the libs that are in the godot asset lib store.
-
-🪹[module](https://github.com/expressobits/steam-multiplayer-peer/tree/module): Same compiled version but just the addon folder, to be added as a git submodule
 
 ## Tutorial and Learnings (How to use)
 
@@ -65,8 +57,9 @@ Thank you Michael!
 ## Install
 - [See the Wiki](https://github.com/expressobits/steam-multiplayer-peer/wiki)
 - [Build instructions](https://github.com/expressobits/steam-multiplayer-peer/wiki/Building-Steam-Multiplayer-Peer)
+- This fork is built with Steamworks SDK 1.65 in mind; include that in [`/steam-multiplayer-peer/sdk/`](https://github.com/EamonnER/steam-multiplayer-peer/tree/main/steam-multiplayer-peer/sdk)
 
-## Authors
+## Original Authors
 
 👤 **Rafael Correa**
 * Twitter: [@ScriptsEngineer](https://twitter.com/ScriptsEngineer)
