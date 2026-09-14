@@ -1,5 +1,5 @@
-#ifndef STEAM_MULTIPLAYER_PEER_H
-#define STEAM_MULTIPLAYER_PEER_H
+#ifndef EXPRESSO_STEAM_MULTIPLAYER_PEER_H
+#define EXPRESSO_STEAM_MULTIPLAYER_PEER_H
 
 #include <godot_cpp/classes/multiplayer_peer_extension.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
@@ -229,4 +229,4 @@ private:
 
 VARIANT_ENUM_CAST(ExpressoSteamMultiplayerPeer::SteamNetworkingConfig);
 
-#endif // STEAM_MULTIPLAYER_PEER_H
+#endif // EXPRESSO_STEAM_MULTIPLAYER_PEER_H
