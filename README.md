@@ -6,6 +6,7 @@
 ⚠️⚠️⚠️⚠️ This is a fork ⚠️⚠️⚠️⚠️
 
 This is a fork of the original Expresso Multiplayer Peer that had development paused.
+I am continuing this work with the sole use of it being used alongside the [GodotSteam](https://store.godotengine.org/asset/godotsteam/godotsteam-gdextension/) GDExtension.
 This fork is mainly for use in my personal projects; don't expect frequent updates or fixes.
 
 ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️
@@ -73,6 +74,11 @@ Thank you Michael!
 
 👤 **MichaelMacha**
 * Github: [@MichaelMacha](https://github.com/MichaelMacha)
+
+## Updated By
+
+👤 **Eamonn Rolander**
+* Github: [@EamonnER](https://github.com/EamonnER)
 
 
 ## 🤝 Contributing
