@@ -4,14 +4,14 @@
 void SteamConnection::_bind_methods() {
 }
 
-EResult SteamConnection::_raw_send(Ref<SteamPacketPeer> packet) {
+EResult SteamConnection::_raw_send(Ref<ExpressoSteamPacketPeer> packet) {
 	return SteamNetworkingSockets()->SendMessageToConnection(steam_connection, packet->data, packet->size, packet->transfer_mode, nullptr);
 }
 
 // TODO change to return correct error
 Error SteamConnection::_send_pending() {
 	while (pending_retry_packets.size() > 0) {
-		Ref<SteamPacketPeer> packet = pending_retry_packets.front()->get();
+		Ref<ExpressoSteamPacketPeer> packet = pending_retry_packets.front()->get();
 		EResult errorCode = _raw_send(packet);
 		if (errorCode == k_EResultOK) {
 			pending_retry_packets.pop_front();
@@ -32,11 +32,11 @@ Error SteamConnection::_send_pending() {
 	return OK;
 }
 
-void SteamConnection::_add_packet(Ref<SteamPacketPeer> packet) {
+void SteamConnection::_add_packet(Ref<ExpressoSteamPacketPeer> packet) {
 	pending_retry_packets.push_back(packet);
 }
 
-Error SteamConnection::send(Ref<SteamPacketPeer> packet) {
+Error SteamConnection::send(Ref<ExpressoSteamPacketPeer> packet) {
 	_add_packet(packet);
 	return _send_pending();
 }
@@ -75,7 +75,7 @@ SteamConnection::SteamConnection(uint64_t steam_id) {
 SteamConnection::~SteamConnection() {
 	SteamNetworkingSockets()->CloseConnection(this->steam_connection, ESteamNetConnectionEnd::k_ESteamNetConnectionEnd_App_Generic, "Disconnect Default!", true);
 	while (pending_retry_packets.size()) {
-		Ref<SteamPacketPeer> p = pending_retry_packets.front()->get();
+		Ref<ExpressoSteamPacketPeer> p = pending_retry_packets.front()->get();
 		pending_retry_packets.pop_front();
 	}
 }
@@ -92,7 +92,7 @@ Error SteamConnection::send_peer(uint32_t peer_id) {
 }
 
 Error SteamConnection::_send_setup_peer(const SetupPeerPayload payload) {
-	Ref<SteamPacketPeer> packet = Ref<SteamPacketPeer>(memnew(SteamPacketPeer((void *)&payload, sizeof(SetupPeerPayload), MultiplayerPeer::TRANSFER_MODE_RELIABLE)));
+	Ref<ExpressoSteamPacketPeer> packet = Ref<ExpressoSteamPacketPeer>(memnew(ExpressoSteamPacketPeer((void *)&payload, sizeof(SetupPeerPayload), MultiplayerPeer::TRANSFER_MODE_RELIABLE)));
 	return send(packet);
 }
 

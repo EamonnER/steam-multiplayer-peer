@@ -1,5 +1,5 @@
-#ifndef STEAM_MULTIPLAYER_PEER_H
-#define STEAM_MULTIPLAYER_PEER_H
+#ifndef EXPRESSO_STEAM_MULTIPLAYER_PEER_H
+#define EXPRESSO_STEAM_MULTIPLAYER_PEER_H
 
 #include <godot_cpp/classes/multiplayer_peer_extension.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
@@ -15,8 +15,8 @@ using namespace godot;
 
 #define MAX_PLAYERS_PER_SERVER 16
 
-class SteamMultiplayerPeer : public MultiplayerPeerExtension {
-	GDCLASS(SteamMultiplayerPeer, MultiplayerPeerExtension)
+class ExpressoSteamMultiplayerPeer : public MultiplayerPeerExtension {
+	GDCLASS(ExpressoSteamMultiplayerPeer, MultiplayerPeerExtension)
 
 private:
 	// Used to record the time of the last handshake packet sent
@@ -147,8 +147,8 @@ public:
 		NETWORKING_CONFIG_VALUE_FORCE32BIT = k_ESteamNetworkingConfigValue__Force32Bit
 	};
 
-	SteamMultiplayerPeer();
-	~SteamMultiplayerPeer();
+	ExpressoSteamMultiplayerPeer();
+	~ExpressoSteamMultiplayerPeer();
 	Error _get_packet(const uint8_t **r_buffer, int32_t *r_buffer_size) override;
 	Error _put_packet(const uint8_t *p_buffer, int32_t p_buffer_size) override;
 	int32_t _get_available_packet_count() const override;
@@ -218,15 +218,15 @@ private:
 	HSteamListenSocket listen_socket;
 	HSteamNetConnection connection;
 
-	Ref<SteamPacketPeer> next_received_packet; // gets deleted at the very first get_packet request
-	List<Ref<SteamPacketPeer>> incoming_packets;
+	Ref<ExpressoSteamPacketPeer> next_received_packet; // gets deleted at the very first get_packet request
+	List<Ref<ExpressoSteamPacketPeer>> incoming_packets;
 	const int _get_steam_transfer_flag();
 	ConnectionStatus connection_status = ConnectionStatus::CONNECTION_DISCONNECTED;
 
 	// Networking Sockets callbacks /////////
-	STEAM_CALLBACK(SteamMultiplayerPeer, network_connection_status_changed, SteamNetConnectionStatusChangedCallback_t, callback_network_connection_status_changed);
+	STEAM_CALLBACK(ExpressoSteamMultiplayerPeer, network_connection_status_changed, SteamNetConnectionStatusChangedCallback_t, callback_network_connection_status_changed);
 };
 
-VARIANT_ENUM_CAST(SteamMultiplayerPeer::SteamNetworkingConfig);
+VARIANT_ENUM_CAST(ExpressoSteamMultiplayerPeer::SteamNetworkingConfig);
 
-#endif // STEAM_MULTIPLAYER_PEER_H
+#endif // EXPRESSO_STEAM_MULTIPLAYER_PEER_H
