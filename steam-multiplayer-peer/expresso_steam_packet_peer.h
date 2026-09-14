@@ -1,5 +1,5 @@
-#ifndef STEAM_PACKET_PEER_H
-#define STEAM_PACKET_PEER_H
+#ifndef EXPRESSO_STEAM_PACKET_PEER_H
+#define EXPRESSO_STEAM_PACKET_PEER_H
 
 #include "steam/steam_api_flat.h"
 #include <godot_cpp/classes/os.hpp>
@@ -36,4 +36,4 @@ protected:
 	static void _bind_methods();
 };
 
-#endif // STEAM_PACKET_PEER_H
+#endif // EXPRESSO_STEAM_PACKET_PEER_H
