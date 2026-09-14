@@ -24,13 +24,13 @@ public:
 	uint64 m_ulTickCountLastData; // What was the last time we got data from the player?
 	int peer_id;
 	uint64_t last_msg_timestamp;
-	List<Ref<SteamPacketPeer>> pending_retry_packets;
+	List<Ref<ExpressoSteamPacketPeer>> pending_retry_packets;
 
 private:
-	EResult _raw_send(Ref<SteamPacketPeer> packet);
+	EResult _raw_send(Ref<ExpressoSteamPacketPeer> packet);
 	String _convert_eresult_to_string(EResult e);
 	Error _send_pending();
-	void _add_packet(Ref<SteamPacketPeer> packet);
+	void _add_packet(Ref<ExpressoSteamPacketPeer> packet);
 	Error _send_setup_peer(const SetupPeerPayload payload);
 
 protected:
@@ -40,7 +40,7 @@ public:
 	// REVIEW Enetpeer contains broadcast method (Research for method in steam sockets)
 	// void broadcast(enet_uint8 p_channel, ENetPacket *p_packet);
 	bool operator==(const SteamConnection &data);
-	Error send(Ref<SteamPacketPeer> packet);
+	Error send(Ref<ExpressoSteamPacketPeer> packet);
 	void flush();
 	bool close();
 	SteamConnection(uint64_t steam_id);

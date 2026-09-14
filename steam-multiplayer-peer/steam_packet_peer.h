@@ -9,8 +9,8 @@
 
 using namespace godot;
 
-class SteamPacketPeer : public RefCounted {
-	GDCLASS(SteamPacketPeer, RefCounted)
+class ExpressoSteamPacketPeer : public RefCounted {
+	GDCLASS(ExpressoSteamPacketPeer, RefCounted);
 
 public:
 	enum SteamNetworkingSend {
@@ -29,8 +29,8 @@ public:
 	uint32_t size = 0;
 	uint64_t sender;
 	int transfer_mode = SEND_RELIABLE;
-	SteamPacketPeer();
-	SteamPacketPeer(const void *p_buffer, uint32_t p_buffer_size, int transferMode);
+	ExpressoSteamPacketPeer();
+	ExpressoSteamPacketPeer(const void *p_buffer, uint32_t p_buffer_size, int transferMode);
 
 protected:
 	static void _bind_methods();

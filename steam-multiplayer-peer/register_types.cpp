@@ -17,7 +17,7 @@ void initialize_steam_multiplayer_peer(ModuleInitializationLevel level) {
 	if (level == MODULE_INITIALIZATION_LEVEL_SCENE) {
 		ClassDB::register_class<SteamPacketPeer>();
 		ClassDB::register_class<SteamConnection>();
-		ClassDB::register_class<SteamMultiplayerPeer>();
+		ClassDB::register_class<ExpressoSteamMultiplayerPeer>();
 	}
 }
 
