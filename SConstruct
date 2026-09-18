@@ -40,7 +40,6 @@ Run the following command to download godot-cpp:
     git submodule update --init --recursive""")
     sys.exit(1)
 
-# Local dependency paths, adapt them to your setup
 steam_lib_path = "steam-multiplayer-peer/sdk/redistributable_bin"
 
 env = SConscript("godot-cpp/SConstruct", {"env": env, "customs": customs})
