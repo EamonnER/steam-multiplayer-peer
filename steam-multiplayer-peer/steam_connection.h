@@ -18,9 +18,6 @@ public:
 	struct SetupPeerPayload {
 		uint32_t peer_id = -1;
 	};
-	// These must all have in-class initialisers: SteamConnection is registered with
-	// ClassDB, so GDScript (and Ref<>'s default construction) can create instances
-	// through the default constructor, and ~SteamConnection() touches steam_connection.
 	bool m_bActive = false; // Is this slot in use? Or is it available for new connections?
 	uint64_t steam_id = 0; // What is the steamid of the player?
 	HSteamNetConnection steam_connection = k_HSteamNetConnection_Invalid; // The handle for the connection to the player

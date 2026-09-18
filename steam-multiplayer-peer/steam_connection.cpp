@@ -73,8 +73,6 @@ SteamConnection::SteamConnection(uint64_t steam_id) {
 }
 
 SteamConnection::~SteamConnection() {
-	// Never hand an unset/already-closed handle to Steam: a default-constructed
-	// SteamConnection has no connection, and close() may already have released it.
 	if (steam_connection != k_HSteamNetConnection_Invalid && SteamNetworkingSockets() != nullptr) {
 		SteamNetworkingSockets()->CloseConnection(this->steam_connection, ESteamNetConnectionEnd::k_ESteamNetConnectionEnd_App_Generic, "Disconnect Default!", true);
 	}

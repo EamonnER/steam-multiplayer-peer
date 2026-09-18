@@ -220,12 +220,7 @@ private:
 
 	Ref<ExpressoSteamPacketPeer> next_received_packet; // gets deleted at the very first get_packet request
 	List<Ref<ExpressoSteamPacketPeer>> incoming_packets;
-	// peer_connected is queued here while _poll() walks the connection maps and
-	// flushed once the walk is over; see _poll().
 	List<int> pending_peer_connected;
-	// SteamNetworkingConfigValue_t::SetString only stores the pointer it is given,
-	// so the UTF-8 buffers behind string options have to outlive the socket call
-	// that consumes them.
 	mutable List<CharString> option_string_storage;
 	const int _get_steam_transfer_flag();
 	ConnectionStatus connection_status = ConnectionStatus::CONNECTION_DISCONNECTED;
