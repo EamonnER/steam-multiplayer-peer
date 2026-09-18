@@ -108,27 +108,6 @@ jobs:
         run: |
           Remove-Item bin/* -Include *.exp,*.lib,*.pdb -Force -ErrorAction SilentlyContinue
 
-      - name: Package Steam API runtime
-        shell: bash
-        run: |
-          mkdir -p bin/runtime
-
-          if [ "${{ matrix.target.platform }}" = "windows" ]; then
-            cp steamworks/steamworks_sdk_165/sdk/redistributable_bin/win64/steam_api64.dll \
-              bin/runtime/
-          elif [ "${{ matrix.target.platform }}" = "linux" ]; then
-            if [ "${{ matrix.target.arch }}" = "x86_64" ]; then
-              cp steamworks/steamworks_sdk_165/sdk/redistributable_bin/linux64/libsteam_api.so \
-                bin/runtime/
-            else
-              cp steamworks/steamworks_sdk_165/sdk/redistributable_bin/linuxarm64/libsteam_api.so \
-                bin/runtime/
-            fi
-          elif [ "${{ matrix.target.platform }}" = "macos" ]; then
-            cp steamworks/steamworks_sdk_165/sdk/redistributable_bin/osx/libsteam_api.dylib \
-              bin/runtime/
-          fi
-
       - name: Upload Artifact
         uses: actions/upload-artifact@v7
         with:
