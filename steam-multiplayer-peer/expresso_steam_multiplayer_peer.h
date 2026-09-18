@@ -220,6 +220,8 @@ private:
 
 	Ref<ExpressoSteamPacketPeer> next_received_packet; // gets deleted at the very first get_packet request
 	List<Ref<ExpressoSteamPacketPeer>> incoming_packets;
+	List<int> pending_peer_connected;
+	mutable List<CharString> option_string_storage;
 	const int _get_steam_transfer_flag();
 	ConnectionStatus connection_status = ConnectionStatus::CONNECTION_DISCONNECTED;
 

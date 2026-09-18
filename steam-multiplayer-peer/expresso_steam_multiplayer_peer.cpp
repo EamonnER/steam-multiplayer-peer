@@ -6,6 +6,14 @@
 
 #define STEAM_BUFFER_SIZE 255
 
+static uint64_t get_local_steam_id() {
+	ISteamUser *steam_user = SteamUser();
+	if (steam_user == nullptr) {
+		return 0;
+	}
+	return SteamAPI_ISteamUser_GetSteamID(steam_user);
+}
+
 ExpressoSteamMultiplayerPeer::ExpressoSteamMultiplayerPeer() :
 		callback_network_connection_status_changed(this, &ExpressoSteamMultiplayerPeer::network_connection_status_changed) {
 }
@@ -99,7 +107,10 @@ int32_t ExpressoSteamMultiplayerPeer::_get_packet_peer() const {
 	ERR_FAIL_COND_V_MSG(!_is_active(), 1, "The multiplayer instance isn't currently active.");
 	ERR_FAIL_COND_V_MSG(incoming_packets.size() == 0, 1, "No packets to receive.");
 
-	int32_t peer_id = connections_by_steamId64[incoming_packets.front()->get()->sender]->peer_id;
+	uint64_t sender = incoming_packets.front()->get()->sender;
+	ERR_FAIL_COND_V_MSG(!connections_by_steamId64.has(sender), 1, "No connection registered for the sender of the pending packet.");
+
+	int32_t peer_id = connections_by_steamId64[sender]->peer_id;
 	return peer_id;
 }
 
@@ -148,6 +159,11 @@ void ExpressoSteamMultiplayerPeer::_poll() {
             }
         }
     }
+	while (pending_peer_connected.size() > 0) {
+		int peer_id = pending_peer_connected.front()->get();
+		pending_peer_connected.pop_front();
+		emit_signal("peer_connected", peer_id);
+	}
 }
 
 void ExpressoSteamMultiplayerPeer::_close() {
@@ -174,6 +190,7 @@ void ExpressoSteamMultiplayerPeer::force_close() {
 
 	peerId_to_steamId.clear();
 	connections_by_steamId64.clear();
+	pending_peer_connected.clear();
 	active_mode = MODE_NONE;
 	unique_id = 0;
 	connection_status = CONNECTION_DISCONNECTED;
@@ -452,7 +469,11 @@ void ExpressoSteamMultiplayerPeer::network_connection_status_changed(SteamNetCon
 		add_connection(steam_id, call_data->m_hConn);
 		if (!_is_server()) {
 			connection_status = ConnectionStatus::CONNECTION_CONNECTED;
-			Error err = connections_by_steamId64[steam_id]->send_peer(unique_id);
+			if (connections_by_steamId64.has(steam_id)) {
+				Error err = connections_by_steamId64[steam_id]->send_peer(unique_id);
+			} else {
+				ERR_PRINT("No connection registered for the accepted remote Steam ID.");
+			}
 		}
 	}
 
@@ -519,7 +540,7 @@ Ref<SteamConnection> ExpressoSteamMultiplayerPeer::get_connection_by_peer(int pe
 }
 
 void ExpressoSteamMultiplayerPeer::add_connection(const uint64_t steam_id, HSteamNetConnection connection) {
-	ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID().ConvertToUint64(), "Cannot add self as a new peer.");
+	ERR_FAIL_COND_MSG(steam_id == get_local_steam_id(), "Cannot add self as a new peer.");
 
 	Ref<SteamConnection> connection_data = Ref<SteamConnection>(memnew(SteamConnection(steam_id)));
 	connection_data->steam_connection = connection;
@@ -545,7 +566,10 @@ void ExpressoSteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t 
 	SteamConnection::SetupPeerPayload *receive = (SteamConnection::SetupPeerPayload *)msg->GetData();
 	uint64_t steam_id = msg->m_identityPeer.GetSteamID64();
 
+	ERR_FAIL_COND_MSG(!connections_by_steamId64.has(steam_id), "Received a SetupPeerPayload from an unknown Steam ID.");
+
 	Ref<SteamConnection> connection = connections_by_steamId64[steam_id];
+	ERR_FAIL_COND_MSG(connection.is_null(), "Received a SetupPeerPayload for a null connection.");
 
 	ERR_FAIL_COND_MSG(connection->peer_id != -1 && connection->peer_id == unique_id, "Received SetupPeerPayload for self");
 
@@ -555,16 +579,14 @@ void ExpressoSteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t 
 		}
 		if (_is_server()) {
 			Error err = connection->send_peer(unique_id);
-			emit_signal("peer_connected", connection->peer_id);
-		} else {
-			emit_signal("peer_connected", connection->peer_id);
 		}
+		pending_peer_connected.push_back(connection->peer_id);
 	}
 }
 
 uint64_t ExpressoSteamMultiplayerPeer::get_steam64_from_peer_id(const uint32_t peer_id) const {
 	if (peer_id == this->unique_id) {
-		return SteamUser()->GetSteamID().ConvertToUint64();
+		return get_local_steam_id();
 	} else if (peerId_to_steamId.has(peer_id)) {
 		return peerId_to_steamId[peer_id]->steam_id;
 	} else
@@ -572,7 +594,7 @@ uint64_t ExpressoSteamMultiplayerPeer::get_steam64_from_peer_id(const uint32_t p
 }
 
 uint32_t ExpressoSteamMultiplayerPeer::get_peer_id_from_steam64(const uint64_t steamid) const {
-	if (steamid == SteamUser()->GetSteamID().ConvertToUint64()) {
+	if (steamid == get_local_steam_id()) {
 		return this->unique_id;
 	} else if (connections_by_steamId64.has(steamid)) {
 		return connections_by_steamId64[steamid]->peer_id;
@@ -581,7 +603,7 @@ uint32_t ExpressoSteamMultiplayerPeer::get_peer_id_from_steam64(const uint64_t s
 }
 
 void ExpressoSteamMultiplayerPeer::set_steam_id_peer(uint64_t steam_id, int peer_id) {
-	ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID().ConvertToUint64(), "Cannot add self as a new peer.");
+	ERR_FAIL_COND_MSG(steam_id == get_local_steam_id(), "Cannot add self as a new peer.");
 	ERR_FAIL_COND_MSG(connections_by_steamId64.has(steam_id) == false, "Steam ID missing");
 
 	Ref<SteamConnection> con = connections_by_steamId64[steam_id];
@@ -638,6 +660,7 @@ bool ExpressoSteamMultiplayerPeer::get_no_delay() const {
 SteamNetworkingConfigValue_t *ExpressoSteamMultiplayerPeer::get_convert_options() const {
 	int options_size = options.size();
 	SteamNetworkingConfigValue_t *option_array = new SteamNetworkingConfigValue_t[options_size];
+	option_string_storage.clear();
 
 	if (options_size > 0) {
 		for (int i = 0; i < options_size; i++) {
@@ -655,10 +678,9 @@ SteamNetworkingConfigValue_t *ExpressoSteamMultiplayerPeer::get_convert_options(
 			} else if (type == Variant::FLOAT) {
 				this_option.SetFloat(this_value, options[sent_option]);
 			} else if (type == Variant::STRING) {
-				char *this_string = { 0 };
 				String passed_string = options[sent_option];
-				strcpy(this_string, passed_string.utf8().get_data());
-				this_option.SetString(this_value, this_string);
+				option_string_storage.push_back(passed_string.utf8());
+				this_option.SetString(this_value, option_string_storage.back()->get().get_data());
 			} else {
 				Object *this_pointer;
 				this_pointer = options[sent_option];

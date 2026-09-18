@@ -73,7 +73,9 @@ SteamConnection::SteamConnection(uint64_t steam_id) {
 }
 
 SteamConnection::~SteamConnection() {
-	SteamNetworkingSockets()->CloseConnection(this->steam_connection, ESteamNetConnectionEnd::k_ESteamNetConnectionEnd_App_Generic, "Disconnect Default!", true);
+	if (steam_connection != k_HSteamNetConnection_Invalid && SteamNetworkingSockets() != nullptr) {
+		SteamNetworkingSockets()->CloseConnection(this->steam_connection, ESteamNetConnectionEnd::k_ESteamNetConnectionEnd_App_Generic, "Disconnect Default!", true);
+	}
 	while (pending_retry_packets.size()) {
 		Ref<ExpressoSteamPacketPeer> p = pending_retry_packets.front()->get();
 		pending_retry_packets.pop_front();

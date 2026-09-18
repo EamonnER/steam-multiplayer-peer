@@ -40,23 +40,39 @@ Run the following command to download godot-cpp:
     git submodule update --init --recursive""")
     sys.exit(1)
 
-# Local dependency paths, adapt them to your setup
 steam_lib_path = "steam-multiplayer-peer/sdk/redistributable_bin"
 
 env = SConscript("godot-cpp/SConstruct", {"env": env, "customs": customs})
 if env['platform'] in ('macos', 'osx'):
-    # Set the correct Steam library
     steam_lib_path += "/osx"
     steamworks_library = 'libsteam_api.dylib'
 
 elif env['platform'] in ('linuxbsd', 'linux'):
-    # Set correct Steam library
-    steam_lib_path += "/linux64" if env['arch'] == 'x86_64' else "/linux32"
+    if env['arch'] == 'x86_64':
+        steam_lib_path += "/linux64"
+    elif env['arch'] == 'arm64':
+        steam_lib_path += "/linuxarm64"
+    else:
+        print_error(
+            "Unsupported Linux architecture for Steamworks: {}".format(
+                env['arch']
+            )
+        )
+        sys.exit(1)
+
     steamworks_library = 'libsteam_api.so'
 
 elif env['platform'] == "windows":
-    steam_lib_path += "/win64" if env['arch'] == 'x86_64' else ""
-    steamworks_library = 'steam_api64.dll' if env['arch'] == 'x86_64' else 'steam_api.dll'
+    if env['arch'] == 'x86_64':
+        steam_lib_path += "/win64"
+        steamworks_library = 'steam_api64.dll'
+    else:
+        print_error(
+            "Unsupported Windows architecture for Steamworks: {}".format(
+                env['arch']
+            )
+        )
+        sys.exit(1)
 
 env.Append(LIBPATH=[steam_lib_path])
 env.Append(CPPPATH=['steam-multiplayer-peer/sdk/public'])
