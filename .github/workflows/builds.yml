@@ -3,12 +3,6 @@ name: Build GDExtension
 on:
   workflow_dispatch:
     inputs:
-      steamworks_sdk_tag:
-        description: 'Steamworks SDK Tag'
-        required: true
-        type: string
-        default: 'sdk-1.65'
-
       godotsteam_version:
         description: 'Steam Multiplayer Peer Tag'
         required: true
@@ -61,23 +55,22 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: true
 
       - name: Checkout Steamworks SDK
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
-          lfs: true
+          repository: EamonnER/steamworks-sdk
+          token: ${{ secrets.STEAMWORKS_SDK_TOKEN }}
           path: steamworks
-          repository: ${{ secrets.steamworks_sdk_repo }}
-          ref: ${{ inputs.steamworks_sdk_tag || 'sdk-1.65' }}
 
       - name: Copy Steamworks SDK
         shell: bash
         run: |
-          cp -r steamworks/public steam-multiplayer-peer/sdk
-          cp -r steamworks/redistributable_bin steam-multiplayer-peer/sdk
+          cp -r steamworks/steamworks_sdk_165/sdk/public steam-multiplayer-peer/sdk/
+          cp -r steamworks/steamworks_sdk_165/sdk/redistributable_bin steam-multiplayer-peer/sdk/
 
       - name: Setup godot-cpp
         uses: ./godot-cpp/.github/actions/setup-godot-cpp
@@ -115,7 +108,7 @@ jobs:
           Remove-Item bin/* -Include *.exp,*.lib,*.pdb -Force -ErrorAction SilentlyContinue
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: steam-multiplayer-peer-${{ matrix.target.platform }}-${{ matrix.target.arch }}-${{ matrix.float-precision }}-${{ matrix.target-type }}
           path: |
@@ -127,7 +120,7 @@ jobs:
 
     steps:
       - name: Merge Artifacts
-        uses: actions/upload-artifact/merge@v4
+        uses: actions/upload-artifact/merge@v7
         with:
           name: steam-multiplayer-peer
           pattern: steam-multiplayer-peer-*
