@@ -27,12 +27,3 @@ windows.debug.x86_64 = "./windows/steam-multiplayer-peer.windows.template_debug.
 windows.debug.double.x86_64 = "./windows/steam-multiplayer-peer.windows.template_debug.double.x86_64.dll"
 windows.release.x86_64 = "./windows/steam-multiplayer-peer.windows.template_release.x86_64.dll"
 windows.release.double.x86_64 = "./windows/steam-multiplayer-peer.windows.template_release.double.x86_64.dll"
-
-[dependencies]
-macos.x86_64 = { "macos/libsteam_api.dylib": "" }
-macos.arm64 = { "macos/libsteam_api.dylib": "" }
-
-windows.x86_64 = { "windows/steam_api64.dll": "" }
-
-linux.x86_64 = { "linux/libsteam_api.so": "" }
-linux.arm64 = { "linux/libsteam_api.so": "" }
