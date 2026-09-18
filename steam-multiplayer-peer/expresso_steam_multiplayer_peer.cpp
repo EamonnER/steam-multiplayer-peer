@@ -6,6 +6,24 @@
 
 #define STEAM_BUFFER_SIZE 255
 
+// ISteamUser::GetSteamID() returns CSteamID *by value*. CSteamID has user-declared
+// constructors and private data members, so MSVC (which builds steamclient64.dll)
+// returns it through a hidden return-buffer pointer passed in RDX, while GCC/MinGW
+// returns it in RAX and never sets up that buffer. Calling the C++ method directly
+// therefore makes steamclient64.dll write the SteamID to whatever junk happens to be
+// in RDX -> memory corruption or SIGSEGV inside steamclient64.dll.
+//
+// The flat C API is exported from steam_api64.dll as a plain C function returning a
+// uint64, so it is ABI-safe for every toolchain. Use it for the only by-value class
+// return this extension makes across the module boundary.
+static uint64_t get_local_steam_id() {
+	ISteamUser *steam_user = SteamUser();
+	if (steam_user == nullptr) {
+		return 0;
+	}
+	return SteamAPI_ISteamUser_GetSteamID(steam_user);
+}
+
 ExpressoSteamMultiplayerPeer::ExpressoSteamMultiplayerPeer() :
 		callback_network_connection_status_changed(this, &ExpressoSteamMultiplayerPeer::network_connection_status_changed) {
 }
@@ -519,7 +537,7 @@ Ref<SteamConnection> ExpressoSteamMultiplayerPeer::get_connection_by_peer(int pe
 }
 
 void ExpressoSteamMultiplayerPeer::add_connection(const uint64_t steam_id, HSteamNetConnection connection) {
-	ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID().ConvertToUint64(), "Cannot add self as a new peer.");
+	ERR_FAIL_COND_MSG(steam_id == get_local_steam_id(), "Cannot add self as a new peer.");
 
 	Ref<SteamConnection> connection_data = Ref<SteamConnection>(memnew(SteamConnection(steam_id)));
 	connection_data->steam_connection = connection;
@@ -564,7 +582,7 @@ void ExpressoSteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t 
 
 uint64_t ExpressoSteamMultiplayerPeer::get_steam64_from_peer_id(const uint32_t peer_id) const {
 	if (peer_id == this->unique_id) {
-		return SteamUser()->GetSteamID().ConvertToUint64();
+		return get_local_steam_id();
 	} else if (peerId_to_steamId.has(peer_id)) {
 		return peerId_to_steamId[peer_id]->steam_id;
 	} else
@@ -572,7 +590,7 @@ uint64_t ExpressoSteamMultiplayerPeer::get_steam64_from_peer_id(const uint32_t p
 }
 
 uint32_t ExpressoSteamMultiplayerPeer::get_peer_id_from_steam64(const uint64_t steamid) const {
-	if (steamid == SteamUser()->GetSteamID().ConvertToUint64()) {
+	if (steamid == get_local_steam_id()) {
 		return this->unique_id;
 	} else if (connections_by_steamId64.has(steamid)) {
 		return connections_by_steamId64[steamid]->peer_id;
@@ -581,7 +599,7 @@ uint32_t ExpressoSteamMultiplayerPeer::get_peer_id_from_steam64(const uint64_t s
 }
 
 void ExpressoSteamMultiplayerPeer::set_steam_id_peer(uint64_t steam_id, int peer_id) {
-	ERR_FAIL_COND_MSG(steam_id == SteamUser()->GetSteamID().ConvertToUint64(), "Cannot add self as a new peer.");
+	ERR_FAIL_COND_MSG(steam_id == get_local_steam_id(), "Cannot add self as a new peer.");
 	ERR_FAIL_COND_MSG(connections_by_steamId64.has(steam_id) == false, "Steam ID missing");
 
 	Ref<SteamConnection> con = connections_by_steamId64[steam_id];
