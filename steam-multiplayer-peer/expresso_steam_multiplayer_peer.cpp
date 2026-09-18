@@ -6,16 +6,6 @@
 
 #define STEAM_BUFFER_SIZE 255
 
-// ISteamUser::GetSteamID() returns CSteamID *by value*. CSteamID has user-declared
-// constructors and private data members, so MSVC (which builds steamclient64.dll)
-// returns it through a hidden return-buffer pointer passed in RDX, while GCC/MinGW
-// returns it in RAX and never sets up that buffer. Calling the C++ method directly
-// therefore makes steamclient64.dll write the SteamID to whatever junk happens to be
-// in RDX -> memory corruption or SIGSEGV inside steamclient64.dll.
-//
-// The flat C API is exported from steam_api64.dll as a plain C function returning a
-// uint64, so it is ABI-safe for every toolchain. Use it for the only by-value class
-// return this extension makes across the module boundary.
 static uint64_t get_local_steam_id() {
 	ISteamUser *steam_user = SteamUser();
 	if (steam_user == nullptr) {
@@ -117,7 +107,12 @@ int32_t ExpressoSteamMultiplayerPeer::_get_packet_peer() const {
 	ERR_FAIL_COND_V_MSG(!_is_active(), 1, "The multiplayer instance isn't currently active.");
 	ERR_FAIL_COND_V_MSG(incoming_packets.size() == 0, 1, "No packets to receive.");
 
-	int32_t peer_id = connections_by_steamId64[incoming_packets.front()->get()->sender]->peer_id;
+	// A peer can drop while packets it sent are still queued, and the const
+	// HashMap::operator[] hard-crashes on a missing key.
+	uint64_t sender = incoming_packets.front()->get()->sender;
+	ERR_FAIL_COND_V_MSG(!connections_by_steamId64.has(sender), 1, "No connection registered for the sender of the pending packet.");
+
+	int32_t peer_id = connections_by_steamId64[sender]->peer_id;
 	return peer_id;
 }
 
@@ -166,6 +161,18 @@ void ExpressoSteamMultiplayerPeer::_poll() {
             }
         }
     }
+
+	// _process_ping() queues peer_connected instead of emitting it inline: the
+	// handlers run synchronously and are free to spawn nodes, send RPCs, disconnect
+	// peers or drop the peer entirely, any of which mutates connections_by_steamId64
+	// while the loops above are still iterating it. Emit only once no iterator is live.
+	// Pop before emitting so a handler that re-enters or closes the peer cannot make
+	// us emit the same ID twice.
+	while (pending_peer_connected.size() > 0) {
+		int peer_id = pending_peer_connected.front()->get();
+		pending_peer_connected.pop_front();
+		emit_signal("peer_connected", peer_id);
+	}
 }
 
 void ExpressoSteamMultiplayerPeer::_close() {
@@ -192,6 +199,7 @@ void ExpressoSteamMultiplayerPeer::force_close() {
 
 	peerId_to_steamId.clear();
 	connections_by_steamId64.clear();
+	pending_peer_connected.clear();
 	active_mode = MODE_NONE;
 	unique_id = 0;
 	connection_status = CONNECTION_DISCONNECTED;
@@ -470,7 +478,14 @@ void ExpressoSteamMultiplayerPeer::network_connection_status_changed(SteamNetCon
 		add_connection(steam_id, call_data->m_hConn);
 		if (!_is_server()) {
 			connection_status = ConnectionStatus::CONNECTION_CONNECTED;
-			Error err = connections_by_steamId64[steam_id]->send_peer(unique_id);
+			// add_connection() bails out without inserting (e.g. the remote identity
+			// resolves to ourselves), and HashMap::operator[] would then hand back a
+			// freshly inserted null Ref.
+			if (connections_by_steamId64.has(steam_id)) {
+				Error err = connections_by_steamId64[steam_id]->send_peer(unique_id);
+			} else {
+				ERR_PRINT("No connection registered for the accepted remote Steam ID.");
+			}
 		}
 	}
 
@@ -563,7 +578,12 @@ void ExpressoSteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t 
 	SteamConnection::SetupPeerPayload *receive = (SteamConnection::SetupPeerPayload *)msg->GetData();
 	uint64_t steam_id = msg->m_identityPeer.GetSteamID64();
 
+	// HashMap::operator[] inserts a default (null) Ref for a missing key, so the
+	// lookup has to be guarded or an unknown sender dereferences a null connection.
+	ERR_FAIL_COND_MSG(!connections_by_steamId64.has(steam_id), "Received a SetupPeerPayload from an unknown Steam ID.");
+
 	Ref<SteamConnection> connection = connections_by_steamId64[steam_id];
+	ERR_FAIL_COND_MSG(connection.is_null(), "Received a SetupPeerPayload for a null connection.");
 
 	ERR_FAIL_COND_MSG(connection->peer_id != -1 && connection->peer_id == unique_id, "Received SetupPeerPayload for self");
 
@@ -573,10 +593,9 @@ void ExpressoSteamMultiplayerPeer::_process_ping(const SteamNetworkingMessage_t 
 		}
 		if (_is_server()) {
 			Error err = connection->send_peer(unique_id);
-			emit_signal("peer_connected", connection->peer_id);
-		} else {
-			emit_signal("peer_connected", connection->peer_id);
 		}
+		// Deferred: _poll() emits this once it is done iterating the connection maps.
+		pending_peer_connected.push_back(connection->peer_id);
 	}
 }
 
@@ -656,6 +675,7 @@ bool ExpressoSteamMultiplayerPeer::get_no_delay() const {
 SteamNetworkingConfigValue_t *ExpressoSteamMultiplayerPeer::get_convert_options() const {
 	int options_size = options.size();
 	SteamNetworkingConfigValue_t *option_array = new SteamNetworkingConfigValue_t[options_size];
+	option_string_storage.clear();
 
 	if (options_size > 0) {
 		for (int i = 0; i < options_size; i++) {
@@ -673,10 +693,13 @@ SteamNetworkingConfigValue_t *ExpressoSteamMultiplayerPeer::get_convert_options(
 			} else if (type == Variant::FLOAT) {
 				this_option.SetFloat(this_value, options[sent_option]);
 			} else if (type == Variant::STRING) {
-				char *this_string = { 0 };
+				// SetString() only keeps the pointer it is handed, it does not copy,
+				// so the UTF-8 buffer is owned by the peer and stays alive until the
+				// options are rebuilt. (The previous code strcpy'd into a null
+				// pointer, which crashed as soon as any string option was set.)
 				String passed_string = options[sent_option];
-				strcpy(this_string, passed_string.utf8().get_data());
-				this_option.SetString(this_value, this_string);
+				option_string_storage.push_back(passed_string.utf8());
+				this_option.SetString(this_value, option_string_storage.back()->get().get_data());
 			} else {
 				Object *this_pointer;
 				this_pointer = options[sent_option];
